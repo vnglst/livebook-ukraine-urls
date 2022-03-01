@@ -42,8 +42,9 @@ result =
   urls
   |> Task.async_stream(&HTTPoison.get/1,
     ordered: true,
-    max_concurrency: 50,
-    timeout: 300_000,
+    max_concurrency: 10,
+    # in milliseconds
+    timeout: 1_000_000,
     on_timeout: :kill_task
   )
   |> Enum.into([])

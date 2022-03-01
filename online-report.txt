@@ -1,4 +1,1 @@
-[2022-03-01T19:46:05.333405Z] of total 1387 urls there are still 221 online
-[2022-03-01T19:48:49.968840Z] of total 1387 urls there are still 141 online
-[2022-03-01T19:51:38.188430Z] of total 1387 urls there are still 135 online
-[2022-03-01T19:54:04.952669Z] of total 1387 urls there are still 129 online
+[2022-03-01T20:31:14.729753Z] of total 1387 urls there are still 428 online
