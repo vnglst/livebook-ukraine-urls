@@ -64,7 +64,7 @@ result =
 ```elixir
 total = urls |> Enum.count()
 
-online = result |> Enum.count(fn el -> el == 200 end)
+online = result |> Enum.count(fn el -> el < 400 end)
 
 {:ok, datetime} = DateTime.now("Etc/UTC")
 now = datetime |> DateTime.to_iso8601()
