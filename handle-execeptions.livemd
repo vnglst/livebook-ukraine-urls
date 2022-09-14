@@ -1,4 +1,4 @@
-# Netherlands still up
+# Netherlands still up - version 2
 
 ## About
 
@@ -22,6 +22,8 @@ urls =
   |> Enum.map(fn %URI{scheme: scheme, host: host} -> "#{scheme}://#{host}" end)
   |> Enum.filter(fn url -> String.slice(url, -3..-1) == ".nl" end)
   |> Enum.uniq()
+
+# |> Enum.take(10)
 ```
 
 ```elixir
@@ -31,43 +33,49 @@ File.write("netherlands-parsed.txt", urls |> Enum.join("\n"))
 ## Concurrently get online status of all urls
 
 ```elixir
-defmodule Res do
-  def handle({:ok, {:ok, %HTTPoison.Response{status_code: status_code}}}) do
-    status_code
-  end
-
-  def handle({:ok, {:error, %HTTPoison.Error{reason: reason}}}) do
-    reason
-  end
-
-  def handle({_s, :timeout}) do
-    :timeout
-  end
-
-  def handle({_s, unknown}) do
-    unknown
-  end
-end
+{:ok, supervisor} = Task.Supervisor.start_link()
 
 result =
-  urls
-  |> Task.async_stream(&HTTPoison.get/1,
+  Task.Supervisor.async_stream_nolink(
+    supervisor,
+    urls,
+    fn url -> HTTPoison.get(url, [], follow_redirect: true) end,
     ordered: true,
-    max_concurrency: 500,
-    # in milliseconds
+    max_concurrency: 1000,
     timeout: 1_000_000,
+    # in milliseconds
     on_timeout: :kill_task
   )
   |> Enum.into([])
-  |> Enum.map(&Res.handle/1)
+```
+
+## Format responses
+
+```elixir
+defmodule Response do
+  def handle(
+        {:ok, {:ok, %HTTPoison.Response{status_code: status_code, request_url: request_url}}}
+      ) do
+    [request_url, status_code]
+  end
+
+  def handle({:ok, {:error, error}}) do
+    [:error, error]
+  end
+
+  def handle({:exit, msg}) do
+    [:exit, msg]
+  end
+end
+
+formatted = result |> Enum.map(&Response.handle/1)
 ```
 
 ## Format message
 
 ```elixir
 total = urls |> Enum.count()
-
-online = result |> Enum.count(fn el -> el == 200 end)
+online = formatted |> Enum.count(fn [_, status] -> status === 200 end)
 
 {:ok, datetime} = DateTime.now("Etc/UTC")
 now = datetime |> DateTime.to_iso8601()
